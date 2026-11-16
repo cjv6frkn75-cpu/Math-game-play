@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مغامرة الأرقام - لعبة الرياضيات للأطفال</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            overflow-x: hidden;
+        }
+
+        /* حاوية اللعبة الرئيسية */
+        .game-container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 650px;
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            padding: 25px;
+            text-align: center;
+            position: relative;
+            border: 6px solid #ffd166;
+            overflow: hidden;
+        }
+
+        /* زينة الخلفية */
+        .bg-shape {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.12;
+            z-index: 0;
+        }
+        .shape-1 { width: 150px; height: 150px; background: #ff6b6b; top: -40px; right: -40px; }
+        .shape-2 { width: 120px; height: 120px; background: #06d6a0; bottom: -30px; left: -30px; }
+
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            color: #ff6b6b;
+            font-size: 2.3rem;
+            font-weight: 900;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 0px #ffe66d;
+        }
+
+        p.subtitle {
+            color: #555;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        /* الشاشات */
+        .screen {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* أزرار الاختيار في القائمة الرئيسية */
+        .section-title {
+            font-size: 1.25rem;
+            color: #118ab2;
+            margin: 15px 0 10px;
+            font-weight: 700;
+        }
+
+        .grid-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .grid-buttons.three-cols {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .btn-choice {
+            background: #f8f9fa;
+            border: 3px solid #dee2e6;
+            border-radius: 20px;
+            padding: 15px 10px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-choice:hover {
+            transform: translateY(-4px);
+        }
+
+        .btn-choice.selected {
+            background: #ffd166;
+            border-color: #f77f00;
+            color: #000;
+            transform: scale(1.03);
+            box-shadow: 0 6px 15px rgba(247, 127, 0, 0.25);
+        }
+
+        .btn-choice span.icon {
+            font-size: 1.8rem;
+        }
+
+        /* زر البداية */
+        .btn-start {
+            background: linear-gradient(45deg, #06d6a0, #1b9aaa);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 45px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #048a67;
+            transition: all 0.15s;
+            margin-top: 10px;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+        }
+
+        .btn-start:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #048a67;
+        }
+
+        /* شريط المعلومات أثناء اللعب */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f1f8ff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #cce5ff;
+        }
+
+        .badge {
+            font-size: 1.15rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .score-badge { color: #f77f00; }
+        .progress-badge { color: #118ab2; }
+
+        .btn-home {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 6px 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        /* الشخصية الكرتونية */
+        .mascot-area {
+            margin: 10px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .mascot {
+            font-size: 4rem;
+            transition: transform 0.3s;
+            display: inline-block;
+        }
+
+        .mascot.bounce {
+            animation: bounce 0.6s infinite alternate;
+        }
+
+        .mascot.celebrate {
+            animation: spinJump 0.7s ease;
+        }
+
+        .mascot.shake {
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
+        }
+
+        @keyframes spinJump {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.35) rotate(15deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-12px); }
+            75% { transform: translateX(12px); }
+        }
+
+        .speech-bubble {
+            background: #fff3cd;
+            border: 2px solid #ffeeba;
+            color: #856404;
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-top: 5px;
+        }
+
+        /* صندوق السؤال */
+        .question-box {
+            background: #f8f9fa;
+            border: 4px dashed #4facfe;
+            border-radius: 25px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .math-expression {
+            font-size: 3.2rem;
+            font-weight: 900;
+            color: #2b2d42;
+            direction: ltr; /* لضمان ظهور الأرقام والعمليات بالترتيب الرياضي الصحيح */
+            letter-spacing: 3px;
+        }
+
+        /* المساعدة البصرية للصفوف الأولية */
+        .visual-aid {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+            min-height: 35px;
+            font-size: 1.5rem;
+        }
+
+        .visual-group {
+            background: #ffffff;
+            padding: 5px 12px;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+        }
+
+        /* خيارات الإجابة */
+        .answers-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .answer-btn {
+            border: none;
+            border-radius: 20px;
+            padding: 18px;
+            font-size: 2rem;
+            font-weight: 900;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.15s, filter 0.15s;
+            box-shadow: 0 7px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .answer-btn:nth-child(1) { background: #ff6b6b; }
+        .answer-btn:nth-child(2) { background: #4ecdc4; }
+        .answer-btn:nth-child(3) { background: #ff9f1c; }
+        .answer-btn:nth-child(4) { background: #8338ec; }
+
+        .answer-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            filter: brightness(1.08);
+        }
+
+        .answer-btn:active:not(:disabled) {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .answer-btn.correct {
+            background: #06d6a0 !important;
+            transform: scale(1.05);
+        }
+
+        .answer-btn.wrong {
+            background: #adb5bd !important;
+            opacity: 0.6;
+        }
+
+        /* شاشة النهاية */
+        .stars-display {
+            font-size: 3.5rem;
+            margin: 15px 0;
+        }
+
+        .final-score {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #118ab2;
+            margin-bottom: 20px;
+        }
+
+        /* قصاصات الاحتفال */
+        .confetti {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            top: -15px;
+            z-index: 999;
+            border-radius: 3px;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(105vh) rotate(720deg);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .grid-buttons.three-cols { grid-template-columns: repeat(2, 1fr); }
+            .math-expression { font-size: 2.5rem; }
+            .answer-btn { font-size: 1.7rem; padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+
+    <div class="content">
+        <!-- 1. شاشة البداية والإعدادات -->
+        <div id="start-screen" class="screen active">
+            <h1>🚀 مغامرة الأرقام</h1>
+            <p class="subtitle">اختر صفك الدراسي والعملية الحسابية لنبدأ اللعب!</p>
+
+            <div class="section-title">1️⃣ اختر مستواك (الصف الدراسي):</div>
+            <div class="grid-buttons" id="grade-options">
+                <button class="btn-choice selected" data-grade="1-2">
+                    <span class="icon">🐣</span>
+                    <span>صف ١ - ٢</span>
+                    <small style="color:#666; font-size:0.85rem;">(أرقام سهلة + رسومات)</small>
+                </button>
+                <button class="btn-choice" data-grade="3-4">
+                    <span class="icon">🦁</span>
+                    <span>صف ٣ - ٤</span>
+                    <small style="color:#666; font-size:0.85rem;">(تحدي الأبطال)</small>
+                </button>
+            </div>
+
+            <div class="section-title">2️⃣ اختر الدرس:</div>
+            <div class="grid-buttons three-cols" id="op-options">
+                <button class="btn-choice selected" data-op="add">
+                    <span class="icon">➕</span>
+                    <span>الجمع</span>
+                </button>
+                <button class="btn-choice" data-op="sub">
+                    <span class="icon">➖</span>
+                    <span>الطرح</span>
+                </button>
+                <button class="btn-choice" data-op="mul">
+                    <span class="icon">✖️</span>
+                    <span>الضرب</span>
+                </button>
+                <button class="btn-choice" data-op="div">
+                    <span class="icon">➗</span>
+                    <span>القسمة</span>
+                </button>
+                <button class="btn-choice" data-op="mix" style="grid-column: span 2;">
+                    <span class="icon">🌈</span>
+                    <span>تحدي شامل (كل العمليات)</span>
+                </button>
+            </div>
+
+            <button class="btn-start" onclick="startGame()">هيا نلعب! 🎮</button>
+        </div>
+
+        <!-- 2. شاشة اللعب -->
+        <div id="game-screen" class="screen">
+            <div class="top-bar">
+                <button class="btn-home" onclick="goHome()">🏠 القائمة</button>
+                <div class="badge progress-badge">السؤال: <span id="q-counter">1 / 10</span></div>
+                <div class="badge score-badge">⭐ النقاط: <span id="score">0</span></div>
+            </div>
+
+            <div class="mascot-area">
+                <div id="mascot" class="mascot bounce">🦊</div>
+                <div id="speech" class="speech-bubble">أهلاً يا بطل! ما هو الجواب الصحيح؟</div>
+            </div>
+
+            <div class="question-box">
+                <div id="question-text" class="math-expression">3 + 4 = ?</div>
+                <div id="visual-aid" class="visual-aid"></div>
+            </div>
+
+            <div class="answers-grid" id="answers-container">
+                <!-- الأزرار ستُضاف برمجياً -->
+            </div>
+        </div>
+
+        <!-- 3. شاشة النهاية -->
+        <div id="end-screen" class="screen">
+            <div style="font-size: 4.5rem;">🏆</div>
+            <h1>أحسنت يا بطل!</h1>
+            <p class="subtitle" id="end-message">لقد أنهيت التحدي بنجاح رائع!</p>
+            <div class="stars-display" id="stars-result">⭐⭐⭐</div>
+            <div class="final-score">مجموع نقاطك: <span id="final-score-num">100</span></div>
+            <button class="btn-start" onclick="startGame()">العب مرة أخرى 🔄</button>
+            <br><br>
+            <button class="btn-home" style="padding: 10px 25px; font-size: 1.1rem;" onclick="goHome()">تغيير الدرس 🏠</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // متغيرات الحالة
+    let selectedGrade = '1-2';
+    let selectedOp = 'add';
+    let score = 0;
+    let currentQuestion = 0;
+    const totalQuestions = 10;
+    let correctAnswer = 0;
+    let canAnswer = true;
+
+    const fruits = ['🍎', '🍌', '🍓', '🍊', '🍉', '⭐', '🎈', '⚽'];
+    const encouragements = [
+        "رائع جداً! إجابة ذكية 🌟",
+        "أحسنت يا بطل الرياضيات! 🎉",
+        "ممتاز! استمر هكذا 🚀",
+        "عبقري! إجابة صحيحة 💯",
+        "يا سلام عليك! بطل حقيقي 👏"
+    ];
+
+    // تهيئة أزرار الاختيار
+    document.querySelectorAll('#grade-options .btn-choice').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#grade-options .btn-choice').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedGrade = btn.dataset.grade;
+            playSound('click');
+        });
+    });
+
+    document.querySelectorAll('#op-options .btn-choice').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#op-options .btn-choice').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedOp = btn.dataset.op;
+            playSound('click');
+        });
+    });
+
+    // نظام المؤثرات الصوتية المدمج (Web Audio API)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (type === 'click') {
+            osc.frequency.setValueAtTime(500, now);
+            gain.gain.setValueAtTime(0.1, now);
+            osc.start(now);
+            osc.stop(now + 0.08);
+        } else if (type === 'correct') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523.25, now); // C5
+            osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+            osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+            osc.start(now);
+            osc.stop(now + 0.45);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(220, now);
+            osc.frequency.linearRampToValueAtTime(150, now + 0.25);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+        } else if (type === 'win') {
+            osc.type = 'triangle';
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, i) => {
+                osc.frequency.setValueAtTime(freq, now + i * 0.12);
+            });
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+            osc.start(now);
+            osc.stop(now + 0.7);
+        }
+    }
+
+    function switchScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function goHome() {
+        playSound('click');
+        switchScreen('start-screen');
+    }
+
+    function startGame() {
+        playSound('click');
+        score = 0;
+        currentQuestion = 0;
+        document.getElementById('score').textContent = score;
+        switchScreen('game-screen');
+        nextQuestion();
+    }
+
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function nextQuestion() {
+        if (currentQuestion >= totalQuestions) {
+            endGame();
+            return;
+        }
+
+        currentQuestion++;
+        canAnswer = true;
+        document.getElementById('q-counter').textContent = `${currentQuestion} / ${totalQuestions}`;
+        
+        const mascot = document.getElementById('mascot');
+        mascot.className = 'mascot bounce';
+        mascot.textContent = '🦊';
+        document.getElementById('speech').textContent = 'فكّر جيداً واختر الإجابة الصحيحة!';
+
+        // تحديد العملية الحالية
+        let op = selectedOp;
+        if (op === 'mix') {
+            const ops = ['add', 'sub', 'mul', 'div'];
+            op = ops[getRandomInt(0, 3)];
+        }
+
+        let num1, num2, symbol, visualHTML = '';
+        const fruit = fruits[getRandomInt(0, fruits.length - 1)];
+
+        if (selectedGrade === '1-2') {
+            // مستوى صف 1 - 2 (أرقام بسيطة)
+            if (op === 'add') {
+                num1 = getRandomInt(1, 10);
+                num2 = getRandomInt(1, 10);
+                correctAnswer = num1 + num2;
+                symbol = '+';
+                if (num1 <= 7 && num2 <= 7) {
+                    visualHTML = `<span class="visual-group">${fruit.repeat(num1)}</span> ➕ <span class="visual-group">${fruit.repeat(num2)}</span>`;
+                }
+            } else if (op === 'sub') {
+                num1 = getRandomInt(3, 15);
+                num2 = getRandomInt(1, num1);
+                correctAnswer = num1 - num2;
+                symbol = '-';
+                if (num1 <= 10) {
+                    visualHTML = `<span class="visual-group">${fruit.repeat(num1)} (نأخذ منها ${num2})</span>`;
+                }
+            } else if (op === 'mul') {
+                num1 = getRandomInt(1, 5);
+                num2 = getRandomInt(1, 5);
+                correctAnswer = num1 * num2;
+                symbol = '×';
+                visualHTML = `<span class="visual-group">${Array(num1).fill(fruit.repeat(num2)).join(' | ')}</span>`;
+            } else if (op === 'div') {
+                num2 = getRandomInt(1, 4);
+                correctAnswer = getRandomInt(1, 5);
+                num1 = num2 * correctAnswer;
+                symbol = '÷';
+                visualHTML = `<span class="visual-group">وزّع ${fruit.repeat(num1)} على ${num2} مجموعات</span>`;
+            }
+        } else {
+            // مستوى صف 3 - 4 (أرقام أكبر)
+            if (op === 'add') {
+                num1 = getRandomInt(12, 55);
+                num2 = getRandomInt(10, 45);
+                correctAnswer = num1 + num2;
+                symbol = '+';
+            } else if (op === 'sub') {
+                num1 = getRandomInt(25, 90);
+                num2 = getRandomInt(10, num1 - 5);
+                correctAnswer = num1 - num2;
+                symbol = '-';
+            } else if (op === 'mul') {
+                num1 = getRandomInt(3, 10);
+                num2 = getRandomInt(3, 10);
+                correctAnswer = num1 * num2;
+                symbol = '×';
+            } else if (op === 'div') {
+                num2 = getRandomInt(2, 9);
+                correctAnswer = getRandomInt(2, 10);
+                num1 = num2 * correctAnswer;
+                symbol = '÷';
+            }
+        }
+
+        document.getElementById('question-text').textContent = `${num1} ${symbol} ${num2} = ?`;
+        document.getElementById('visual-aid').innerHTML = visualHTML;
+
+        generateOptions(correctAnswer);
+    }
+
+    function generateOptions(correct) {
+        let options = new Set([correct]);
+        while (options.size < 4) {
+            let offset = getRandomInt(-5, 5);
+            let fake = correct + offset;
+            if (fake >= 0 && fake !== correct) {
+                options.add(fake);
+            }
+        }
+
+        // خلط الخيارات عشوائياً
+        const shuffled = Array.from(options).sort(() => Math.random() - 0.5);
+        const container = document.getElementById('answers-container');
+        container.innerHTML = '';
+
+        shuffled.forEach(val => {
+            const btn = document.createElement('button');
+            btn.className = 'answer-btn';
+            btn.textContent = val;
+            btn.onclick = () => checkAnswer(val, btn);
+            container.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selected, btnElement) {
+        if (!canAnswer) return;
+        canAnswer = false;
+
+        const mascot = document.getElementById('mascot');
+        const speech = document.getElementById('speech');
+        const allBtns = document.querySelectorAll('.answer-btn');
+
+        if (selected === correctAnswer) {
+            playSound('correct');
+            score += 10;
+            document.getElementById('score').textContent = score;
+            btnElement.classList.add('correct');
+            mascot.textContent = '🥳';
+            mascot.className = 'mascot celebrate';
+            speech.textContent = encouragements[getRandomInt(0, encouragements.length - 1)];
+            spawnConfetti(25);
+        } else {
+            playSound('wrong');
+            btnElement.classList.add('wrong');
+            mascot.textContent = '🤔';
+            mascot.className = 'mascot shake';
+            speech.textContent = `حاول مرة أخرى! الإجابة الصحيحة هي ${correctAnswer}`;
+            allBtns.forEach(b => {
+                if (parseInt(b.textContent) === correctAnswer) {
+                    b.classList.add('correct');
+                }
+            });
+        }
+
+        allBtns.forEach(b => b.disabled = true);
+
+        setTimeout(() => {
+            nextQuestion();
+        }, 1600);
+    }
+
+    function endGame() {
+        playSound('win');
+        switchScreen('end-screen');
+        document.getElementById('final-score-num').textContent = `${score} / ${totalQuestions * 10}`;
+
+        const starsEl = document.getElementById('stars-result');
+        const msgEl = document.getElementById('end-message');
+
+        if (score >= 80) {
+            starsEl.textContent = '⭐⭐⭐';
+            msgEl.textContent = 'أداء خارق! أنت عبقري في الرياضيات!';
+            spawnConfetti(60);
+        } else if (score >= 50) {
+            starsEl.textContent = '⭐⭐';
+            msgEl.textContent = 'عمل رائع جداً! استمر في التدريب لتصل للقمة!';
+            spawnConfetti(30);
+        } else {
+            starsEl.textContent = '⭐';
+            msgEl.textContent = 'بداية جميلة! العب مرة أخرى لتحصل على نجوم أكثر!';
+        }
+    }
+
+    function spawnConfetti(count) {
+        const colors = ['#ff6b6b', '#ffd166', '#06d6a0', '#118ab2', '#8338ec', '#ff9f1c'];
+        for (let i = 0; i < count; i++) {
+            const conf = document.createElement('div');
+            conf.className = 'confetti';
+            conf.style.left = Math.random() * 100 + 'vw';
+            conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            conf.style.animationDuration = (Math.random() * 1.5 + 1.5) + 's';
+            document.body.appendChild(conf);
+            setTimeout(() => conf.remove(), 3000);
+        }
+    }
+</script>
+
+</body>
+</html>
